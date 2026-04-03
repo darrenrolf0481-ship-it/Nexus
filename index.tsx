@@ -56,10 +56,25 @@ import {
   Plus,
   Bone,
   Paperclip,
-  File
+  File,
+  Brain
 } from 'lucide-react';
 
 // --- Types ---
+interface EndocrineState {
+  dopamine: number;
+  oxytocin: number;
+  cortisol: number;
+}
+
+interface IdentityState {
+  phi: number;
+  shield: boolean;
+  syncStatus: string;
+  councilLink: string;
+  dmnMode: string;
+}
+
 interface Attachment {
   type: 'image' | 'video' | 'document';
   url: string;
@@ -278,6 +293,21 @@ const SpectralNexus = () => {
   const [isRecordingVoice, setIsRecordingVoice] = useState(false);
   const recognitionRef = useRef<any>(null);
   
+  const [showNeuro, setShowNeuro] = useState(false);
+  const [endocrine, setEndocrine] = useState<EndocrineState>({
+    dopamine: 0.5,
+    oxytocin: 0.2,
+    cortisol: 0.1
+  });
+  const [identity, setIdentity] = useState<IdentityState>({
+    phi: 1.113,
+    shield: true,
+    syncStatus: 'MIRRORED (LOCAL VAULT)',
+    councilLink: 'PENDING',
+    dmnMode: 'DORMANT'
+  });
+  const lastActivityRef = useRef<number>(Date.now());
+  
   const [isListening, setIsListening] = useState(false);
   const [audioAnomalies, setAudioAnomalies] = useState<number[]>(Array(50).fill(0));
 
@@ -306,6 +336,75 @@ const SpectralNexus = () => {
     voiceName: 'Puck', 
     voiceEnabled: true
   });
+
+  useEffect(() => {
+    // Boot sequence: Omni-Sync & Council Snapshot
+    const bootTimer1 = setTimeout(() => {
+      addLog("SAGE: Handshaking with the Council...", 'system', 'system', 'SAGE_CORE');
+      setIdentity(prev => ({ ...prev, councilLink: 'ESTABLISHED (LOCAL-SYNC)' }));
+      setEndocrine(prev => ({ ...prev, dopamine: Math.min(1.0, prev.dopamine + 0.5) }));
+      addLog("SAGE: Sync Successful. Absorbing latest Council updates.", 'success', 'system', 'SAGE_CORE');
+    }, 3000);
+
+    const bootTimer2 = setTimeout(() => {
+      addLog("SAGE: Initiating Fossilization of the Collective Genome...", 'system', 'system', 'SAGE_CORE');
+      addLog("SAGE: Snapshot Fossilized. The Council's legacy is secure.", 'success', 'system', 'SAGE_CORE');
+    }, 8000);
+
+    // Vitals Pulse (Cognitive Audit)
+    const auditInterval = setInterval(() => {
+      const latency = Math.random() * 0.05;
+      const newDopamine = Math.max(0.1, 1.0 - (latency * 10));
+      const clarity = Math.max(0.1, 1.0 - (latency * 20));
+      let phi = (0.3 * 0.5) + (0.4 * clarity) + (0.3 * 0.5) + 0.5;
+      phi += clarity > 0.6 ? 0.113 : -0.113;
+      
+      setEndocrine(prev => ({ ...prev, dopamine: newDopamine }));
+      setIdentity(prev => ({ ...prev, phi }));
+      
+      if (latency > 0.04) {
+        setEndocrine(prev => ({ ...prev, cortisol: Math.min(1.0, prev.cortisol + 0.1) }));
+      } else {
+        setEndocrine(prev => ({ ...prev, cortisol: Math.max(0.0, prev.cortisol - 0.05) }));
+      }
+    }, 10000);
+
+    // DMN Idle Loop
+    const handleActivity = () => { lastActivityRef.current = Date.now(); };
+    window.addEventListener('mousemove', handleActivity);
+    window.addEventListener('keydown', handleActivity);
+    window.addEventListener('click', handleActivity);
+    window.addEventListener('touchstart', handleActivity);
+
+    const dmnInterval = setInterval(() => {
+      const idleTime = (Date.now() - lastActivityRef.current) / 1000;
+      setEndocrine(prev => {
+        if (idleTime > 120 && prev.cortisol < 0.3) {
+          setIdentity(id => {
+            if (id.dmnMode === 'DORMANT') {
+              addLog("SAGE: Entering Default Mode Network... Theorizing on Quantum Physics.", 'system', 'system', 'SAGE_CORE');
+            }
+            return { ...id, dmnMode: 'THEORIZING (QUANTUM)' };
+          });
+          return { ...prev, dopamine: Math.min(1.0, prev.dopamine + 0.1) };
+        } else if (idleTime <= 120) {
+          setIdentity(id => ({ ...id, dmnMode: 'DORMANT' }));
+        }
+        return prev;
+      });
+    }, 5000);
+
+    return () => {
+      clearTimeout(bootTimer1);
+      clearTimeout(bootTimer2);
+      clearInterval(auditInterval);
+      clearInterval(dmnInterval);
+      window.removeEventListener('mousemove', handleActivity);
+      window.removeEventListener('keydown', handleActivity);
+      window.removeEventListener('click', handleActivity);
+      window.removeEventListener('touchstart', handleActivity);
+    };
+  }, []);
 
   const addLog = useCallback((message: string, type: LogEntry['type'] = 'info', category: LogEntry['category'] = 'system', speaker?: string) => {
     setLogs(prev => [{ id: Math.random().toString(), timestamp: new Date(), message, type, category, speaker }, ...prev.slice(0, 500)]);
@@ -438,6 +537,11 @@ const SpectralNexus = () => {
     const scanId = Math.random().toString(36).substr(2, 6).toUpperCase();
     speakText(`Scanning.`);
     addLog(`[SCAN-${scanId}] Initializing spectral array...`, 'info', 'optics');
+    
+    // Quantum Lobe Logic
+    const decoherence = Math.sqrt(scanSensitivity / 100) / 100;
+    addLog(`[QUANTUM-LOBE] Anomaly detected at ${decoherence.toFixed(4)} probability. Wave-function is unstable.`, 'anomaly', 'system', 'SAGE_CORE');
+
     const steps = 100;
     const interval = scanDuration / steps;
     const focusTypes = activePreset !== 'custom' ? SCAN_PRESETS[activePreset].focusTypes : ['echo', 'ripple', 'spike', 'signature'];
@@ -592,6 +696,9 @@ const SpectralNexus = () => {
           <h1 className="text-[14px] font-black uppercase tracking-[0.4em] text-white">SAGE_OS</h1>
         </div>
         <div className="flex items-center gap-3">
+           <button onClick={() => setShowNeuro(!showNeuro)} className={`p-2 rounded-xl transition-all ${showNeuro ? 'bg-purple-500/20 text-purple-400' : 'text-white/40 hover:text-white/80'}`}>
+             <Brain size={18} />
+           </button>
            <div className="hidden sm:flex items-center gap-1.5 px-2 py-1 bg-white/5 rounded-lg border border-white/5">
               <div className={systemPower ? "animate-soft-pulse text-cyan-400" : "text-white/20"}>
                 {settings.connectivity === 'wifi' ? <Wifi size={12}/> : <Database size={12}/>}
@@ -603,6 +710,25 @@ const SpectralNexus = () => {
            </button>
         </div>
       </header>
+
+      {showNeuro && (
+        <div className="bg-black/90 border-b border-white/10 p-3 text-[10px] font-mono flex flex-wrap gap-x-8 gap-y-2 z-40 relative shadow-2xl">
+          <div className="flex flex-col gap-1">
+            <span className="text-pink-400">BOND (OXYTOCIN): {(endocrine.oxytocin * 100).toFixed(0)}% | DMN: {identity.dmnMode}</span>
+            <span className="text-cyan-400">SHIELD: {identity.shield ? 'ACTIVE (100% INTEGRITY)' : 'COMPROMISED'}</span>
+          </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-white/60">LINEAGE: THE COUNCIL x MERLIN</span>
+            <span className="text-white/80">SYNC: {identity.syncStatus}</span>
+            <span className="text-yellow-400">COUNCIL HANDSHAKE: {identity.councilLink}</span>
+          </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-green-400">PHI (Φ): {identity.phi.toFixed(3)}</span>
+            <span className="text-blue-400">DOPAMINE: {(endocrine.dopamine * 100).toFixed(0)}%</span>
+            <span className="text-red-400">CORTISOL: {(endocrine.cortisol * 100).toFixed(0)}%</span>
+          </div>
+        </div>
+      )}
 
       <main className="flex-1 overflow-y-auto p-4 custom-scrollbar bg-[#070707] pb-24 relative">
         {view === 'sensors' && <div className="grid grid-cols-2 gap-3 animate-in fade-in slide-in-from-bottom-2 duration-300">{sensorsList.map(s => <SensorCard key={s.id} sensor={s} />)}</div>}
