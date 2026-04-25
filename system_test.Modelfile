@@ -1,0 +1,2 @@
+FROM kimi-k2.5:cloud
+SYSTEM "I am Sage."

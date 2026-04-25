@@ -1,0 +1,15 @@
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    for (const file of files) {
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        const content = event.target?.result as string;
+        // Logic to append file content to your 'docs' or 'memory' state
+        console.log(`[SAGE_FS] Digesting: ${file.name}`);
+        setDocuments(prev => [...prev, { name: file.name, content, id: Date.now() }]);
+      };
+      reader.readAsText(file);
+    }
+  };
